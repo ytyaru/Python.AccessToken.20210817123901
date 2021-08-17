@@ -1,0 +1,10 @@
+${description}	${version}
+${usage}
+Parameters:
+  $$1    DOMAIN   ドメイン名。
+  $$2    USER     ユーザ名。
+  $$3... SCOPES   必要なスコープ。
+Examples:
+  ${this}
+  ${this} mstdn.jp ytyaru
+  ${this} mstdn.jp ytyaru write

@@ -1,0 +1,6 @@
+[[tokens]]
+domain = 'mstdn.jp'
+username = 'ytyaru'
+scopes = ['read', 'write', 'follow']
+token = 'dz9lGlD7B4R6x8KHW5ik8UAf1z0yII1mWNn5Pfgt6Z0'
+
