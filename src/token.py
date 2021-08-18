@@ -87,7 +87,7 @@ class Command:
         l['url'] = 'https://opensource.org/licenses/MIT'
         return l
     @property
-    def Url(self): return 'https://github.com/ytyaru/Python.Mastodon.Api.Toot.20210812120350'
+    def Url(self): return 'https://github.com/ytyaru/Python.AccessToken.20210817123901'
 class App(Command):
     def token(self, *args, **kwargs): return Token().get(*args, **kwargs)
 class SubCmdParser:
