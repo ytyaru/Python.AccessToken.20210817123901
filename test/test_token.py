@@ -4,26 +4,43 @@ import os, sys, pathlib
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 #sys.path.append(str(pathlib.Path(__file__).parent.parent.resolve()))
 #print(sys.path)
-from src.token import Token
+from src.token import Token, CsvTokenReader, TomlTokenReader
 import unittest
 from unittest.mock import MagicMock, patch, mock_open
 import copy
 import toml
 class TestToken(unittest.TestCase):
-    def test_path(self):
-        self.assertEqual(Token().Path, 'token.toml')
-    @patch('toml.load')
-    def test_get_none_file(self, mock_lib):
-        Token().get('domain', 'username')
-        mock_lib.assert_called_once()
-    @patch('toml.load')
-    def test_get_none_scopes(self, mock_lib):
-        Token().get('domain', 'username')
-        mock_lib.assert_called_once()
-    @patch('toml.load')
-    def test_get_with_scopes(self, mock_lib):
-        Token().get('domain', 'username', ['read', 'write'])
-        mock_lib.assert_called_once()
+    @patch('src.token.TomlTokenReader')
+    @patch('src.token.CsvTokenReader')
+    def test_init(self, mock_csv, mock_toml):
+        Token()
+        mock_csv.assert_called_once()
+        mock_toml.assert_called_once()
+
+    # https://docs.python.org/ja/3/library/unittest.mock.html#nesting-patch-decorators
+    @patch('src.token.CsvTokenReader.get')
+    @patch('os.path.isfile', return_value=True)
+    def test_get_from_csv(self, mock_path, mock_csv):
+        Token().get('', '')
+        mock_csv.assert_called_once()
+    """
+#    @patch.dict('src.token.Token._Token__reader', TomlTokenReader())
+#    @patch.dict('src.token.Token', {'_Token__reader': TomlTokenReader()})
+#    @patch.dict('self', {'_Token__reader': TomlTokenReader()})
+    @patch('src.token.TomlTokenReader.get')
+    @patch('os.path.isfile', return_value=True)
+    def test_get_from_toml(self, mock_path, mock_toml):
+        Token().get('', '')
+        mock_toml.assert_called_once()
+    """
+    @patch('src.token.TomlTokenReader.get')
+    @patch('src.token.CsvTokenReader.get')
+    @patch('os.path.isfile', return_value=False)
+    def test_get_none(self, mock_path, mock_csv, mock_toml):
+        Token().get('', '')
+        mock_csv.assert_not_called()
+        mock_toml.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()
