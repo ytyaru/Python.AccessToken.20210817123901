@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # coding: utf8
-import os, sys, toml, datetime
+import os, sys, csv, toml, datetime
 from string import Template
 from collections import namedtuple
 class This:
@@ -14,9 +14,9 @@ class This:
     @property
     def Names(self): return self.__this
 This = This()
-class Token:
+class TomlTokenReader:
     @property
-    def Path(self): return 'token.toml'
+    def Path(self): return os.path.join(This.Names.parent, 'token.toml')
     def get(self, domain, username, scopes=None):
         tokens = toml.load(self.Path)['tokens']
         if scopes is None:
@@ -25,6 +25,33 @@ class Token:
             f = filter(lambda t: t['domain'] == domain and t['username'] == username and all(s in t['scopes'] for s in scopes), tokens)
         l = list(f)
         if 0 < len(l): return l[0]['token']
+class CsvTokenReader:
+    @property
+    def Path(self): return os.path.join(This.Names.parent, 'token.tsv')
+    def get(self, domain, username, scopes=None):
+        rows = self.__get_rows()
+        if scopes is None:
+            f = filter(lambda r: r[0] == domain and r[1] == username, rows)
+        else:
+            f = filter(lambda r: r[0] == domain and r[1] == username and all(s in r[2].split(',') for s in scopes), rows)
+        l = list(f)
+        if 0 < len(l): return l[0][3]
+    def __get_rows(self):
+        with open(self.Path) as f:
+            rows = list(csv.reader(f, delimiter='\t'))
+            headers = ['domain', 'username', 'scopes', 'token']
+            if rows[0] == headers: rows = rows[1:]
+            return rows
+class Token:
+    def __init__(self):
+        t = TomlTokenReader()
+        c = CsvTokenReader()
+        if os.path.isfile(c.Path): self.__reader = c
+        elif os.path.isfile(t.Path): self.__reader = t
+        else: self.__reader = None
+    def get(self, domain, username, scopes=None):
+        if self.__reader is None: return ''
+        return self.__reader.get(domain, username, scopes=scopes)
 class Command:
     @property
     def Version(self): return '0.0.1'
@@ -79,7 +106,7 @@ class SubCmdParser:
             self.__sub_cmd(sys.argv[1], c.candidate, c.text)
 class Cli:
     def __cmd(self, text):
-        print(text)
+        if text is not None: print(text)
         sys.exit(0)
     def __get_args(self): return sys.argv[1:]
     def __parse(self):
@@ -96,13 +123,10 @@ class Cli:
             parser.parse()
             self.__cmd(App().Help)
         elif 2 < len(sys.argv):
-#            self.__cmd(App().token(self.__get_args()))
             self.__cmd(App().token(sys.argv[1], sys.argv[2], scopes=sys.argv[3:] if 3 < len(sys.argv) else None))
         else: self.__cmd(App().Help)
     def run(self): self.__parse()
 
 if __name__ == "__main__":
     Cli().run()
-#    t = toml.load(FILE_PATH)
-#    print(t)
-    
+
